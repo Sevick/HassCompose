@@ -3,15 +3,17 @@ services:
   homeassistant:
     image: homeassistant/raspberrypi4-homeassistant:2021.12.7
     container_name: homeassistant
+    network_mode: "host"
     logging:
       driver: "local"
       options:
         max-size: "500k"
         max-file: "3"
     restart: unless-stopped
-    network_mode: host
     devices:  
       - /dev/i2c-1:/dev/i2c-1
+      - /dev/i2c-6:/dev/i2c-6
+      - /dev/vhci:/dev/vhci
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /home/homeassistant/hass:/config
@@ -23,6 +25,7 @@ services:
   mariadb:
     image: tobi312/rpi-mariadb
     container_name: mariadb
+    network_mode: "host"
     logging:
       driver: "local"
       options:
@@ -53,21 +56,23 @@ services:
   rabbitmq:
     image: rabbitmq:3.8.16-management
     container_name: rabbitmq
+    network_mode: "host"
     logging:
       driver: "local"
       options:
         max-size: "100k"
         max-file: "3"    
     restart: unless-stopped
-    ports:
+    #ports:
     #  - 5672:5672
-      - 15672:15672
+    #  - 15672:15672
     volumes:
       - /var/lib/rabbitmq/:/var/lib/rabbitmq/  
-      - ./config/rabbitmq/:/etc/rabbitmq/    
+      - ./config/rabbitmq/:/etc/rabbitmq/      
   gesture_sensor:
     image: gesture_sensor
     container_name: gesture_sensor
+    network_mode: "host"
     logging:
       driver: "local"
       options:
