@@ -1,27 +1,7 @@
+# network_mode "host" needed to make bluetooth work inside of hass container
+
 version: '2.4'
 services:
-  homeassistant:
-    image: homeassistant/raspberrypi4-homeassistant:2021.12.7
-    container_name: homeassistant
-    network_mode: "host"
-    logging:
-      driver: "local"
-      options:
-        max-size: "500k"
-        max-file: "3"
-    restart: unless-stopped
-    devices:  
-      - /dev/i2c-1:/dev/i2c-1
-      - /dev/i2c-6:/dev/i2c-6
-      - /dev/vhci:/dev/vhci
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /home/homeassistant/hass:/config
-    #ports:
-    #  - 8123:8123
-    depends_on:
-      - "mariadb"
-      - "rabbitmq"
   mariadb:
     image: tobi312/rpi-mariadb
     container_name: mariadb
@@ -53,10 +33,13 @@ services:
       timeout: 60s
       retries: 5
       #start_period: 30s
+      
   rabbitmq:
     image: rabbitmq:3.8.16-management
     container_name: rabbitmq
     network_mode: "host"
+    environment:
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbitmq_management load_definitions "/etc/rabbitmq/definitions.json"
     logging:
       driver: "local"
       options:
@@ -68,11 +51,40 @@ services:
     #  - 15672:15672
     volumes:
       - /var/lib/rabbitmq/:/var/lib/rabbitmq/  
-      - ./config/rabbitmq/:/etc/rabbitmq/      
+      - ./config/rabbitmq/:/etc/rabbitmq/    
+      
+  homeassistant:
+    image: homeassistant/raspberrypi4-homeassistant:2021.12.7
+    container_name: homeassistant
+    network_mode: "host"
+    logging:
+      driver: "local"
+      options:
+        max-size: "500k"
+        max-file: "3"
+    restart: unless-stopped
+    devices:  
+      - /dev/i2c-1:/dev/i2c-1
+      - /dev/vhci:/dev/vhci
+      - /dev/gpiomem:/dev/gpiomem
+      - /dev/ttyAMA0:/dev/ttyAMA0
+    #  - /dev/i2c-6:/dev/i2c-6      
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /home/homeassistant/hass:/config
+      - /srv/homeassistant/:/test
+    #ports:
+    #  - 8123:8123
+    depends_on:
+      - "mariadb"
+      - "rabbitmq"
+
   gesture_sensor:
     image: gesture_sensor
     container_name: gesture_sensor
     network_mode: "host"
+    env_file:
+      - ./common.env    
     logging:
       driver: "local"
       options:
